@@ -285,6 +285,30 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
 
 }
 
+/**
+ * @brief   Функция проверяет на существование устройства и его контрола.
+ * 
+ * @param {String} topic Топик для проверки типа "device/topic"
+ */
+function deviceExists( topic ) {
+    var device  = topic.split('/')[0];
+    var control = topic.split('/')[1];
+    var exists = false;
+
+    if ( getDevice(device) !== undefined ) {
+        if ( getDevice(device).isControlExists(control) ) {
+            // Устройство и контрол существуют, можно работать с данным топиком
+            exists = true;
+        } else {
+            log.error("[{}] У устройства {} отсутствует контрол {}", module.filename , device , control);
+        }
+    } else {
+        log.error("[{}] {} - данное устройство отсутствует в системе", module.filename , device);
+    }
+
+    return exists;
+}
+
 exports.createLightingGroup  = function( title , name , targetButton , targetLight , master , targetMotion ) {
     createLightingGroup ( title , name , targetButton , targetLight , master , targetMotion );
 } 

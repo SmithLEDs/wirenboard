@@ -35,6 +35,4 @@ var light = [
     'wb-mr6c_1/K5',
     'wb-mr6c_1/K6'
 ];                       
-button.createLightingGroup ('Мастер выключатель' , 'globalLight' , but , light , true );  
-
-      
+button.createLightingGroup ('Мастер выключатель' , 'globalLight' , but , light , true );
