@@ -1,1 +1,1 @@
-# wb_module
+# Модули для wb-rules
