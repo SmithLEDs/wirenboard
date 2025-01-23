@@ -2,18 +2,18 @@
 /**
  * @brief   Данная функция создает виртуальное устройство для управления группой света.
  * 
- * @param {String}  title           Описание виртуального устройства (Можно на русском)
- * @param {String}  name            Имя виртуального устройства (Будет отображаться в новом виртуальном кстройстве как name/... )
- * @param {String}  targetButton    Одиночный топик или массив топиков, по изменению которых 
- *                                  будет происходить переключение света (Кнопки)
- * @param {String}  targetLight     Одиночный топик или массив топиков, которыми будет происходить управление (Реле)
- * @param {boolean} master          true - если это мастер выключатель. Перед отключением группы - запомнит 
- *                                  состояние реле и выключит, а при включении включит только те, которые были включены
- * @param {String}  targetMotion    Одиночный топик или массив топиков, по которым будет отслеживаться движение
- *                                  для включения или отключения группы света (Необязательный - если не указать, то 
- *                                  и не создадутся контролы для управления по движению).
+ * @param {String}  title     Описание виртуального устройства (Можно на русском)
+ * @param {String}  name      Имя виртуального устройства (Будет отображаться в новом виртуальном кстройстве как name/... )
+ * @param {String}  Button    Одиночный топик или массив топиков, по изменению которых 
+ *                            будет происходить переключение света (Кнопки)
+ * @param {String}  Light     Одиночный топик или массив топиков, которыми будет происходить управление (Реле)
+ * @param {boolean} master    true - если это мастер выключатель. Перед отключением группы - запомнит 
+ *                            состояние реле и выключит, а при включении включит только те, которые были включены
+ * @param {String}  Motion    Одиночный топик или массив топиков, по которым будет отслеживаться движение
+ *                            для включения или отключения группы света (Необязательный - если не указать, то 
+ *                            и не создадутся контролы для управления по движению).
  */
-function createLightingGroup ( title , name , targetButton , targetLight , master , targetMotion ) {
+function createLightingGroup ( title , name , Button , Light , master , Motion ) {
 
     var firstStartRule = true;      // Флаг первого запуска модуля или перезагрузки правил
 
@@ -21,46 +21,27 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         var ps = new PersistentStorage( name + "_storage", { global: true }); // Постоянное хранилище для запоминания состояний реле
     }
 
+    var targetButton = [];  // Массив для хранения устройств физических кнопок
+    var targetLight  = [];  // Массив для хранения устройств света
+    
     var lightError  = [];   // Массив для хранения устройств света с meta #error 
-    var motionError = [];   // Массив для хранения устройств движения с meta #error 
     var buttonError = [];   // Массив для хранения устройств физических кнопок с meta #error 
 
     createVirtualDevice( title , name );
 
-    // Первым делом перебираем массив физических кнопок и удаляем из массива
+    // Первым делом перебираем массивы всех физических устройств и удаляем из массива
     // несуществующие устройства
-    targetButton.forEach( function (item, index, arr) {
-        if ( !deviceExists(item) ) {
-            targetButton.splice(index, 1);
-        } else {
-            buttonError.push( item + "#error" );
-        }
-    });
-
-    // Первым делом перебираем массив источников света и удаляем из массива
-    // несуществующие устройства
-    targetLight.forEach( function (item, index, arr) {
-        if ( !deviceExists(item) ) {
-            targetLight.splice(index, 1);
-        } else {
-            lightError.push( item + "#error" );
-        }
-    });
-
-    // Далее перебираем массив источников движения и удаляем из массива
-    // несуществующие устройства
-    if (targetMotion) {
-        targetMotion.forEach( function (item, index, arr) {
-            if ( !deviceExists(item) ) {
-                targetMotion.splice(index, 1);
-            } else {
-                motionError.push( item + "#error" );
-            }
-        });
+    reloadDeviceArray( Button , targetButton , buttonError);
+    reloadDeviceArray( Light  , targetLight  , lightError);
+    if ( Motion ) {
+        var targetMotion = [];  // Массив для хранения устройств движения
+        var motionError = [];   // Массив для хранения устройств движения с meta #error 
+        reloadDeviceArray( Motion , targetMotion , motionError);
     }
 
-    // Перебираем массив источников света и создаем новые правила для управления реле
-    // прямо из виртуального устройства
+
+    // Перебираем массив источников света и создаем новые правила для управления 
+    // физическим реле прямо из виртуального устройства
     targetLight.forEach( function (item, index, arr) {
         defineRule(name + ' ruleLight #' + index, {
             whenChanged: name + '/light_' + index,
@@ -122,8 +103,8 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     readonly: true,
                     forceDefault: true
                 });   
-                if ( dev[targetButton[index]] !== undefined ) {
-                    dev[name]["Button_" + index + '#error'] = dev[targetButton[index]];
+                if ( dev[buttonError[index]] !== undefined ) {
+                    dev[name]["Button_" + index + '#error'] = dev[buttonError[index]];
                 }             
             });
 
@@ -410,11 +391,29 @@ function createErrorRule( targetError , device , control ) {
 
 
 /**
+ * @brief   Функция перебирает массив устройств и добавляет существующие
+ *          устройства в новые массивы, с которым в дальнейшем работает главная 
+ *          функция
+ * @param {*} source        Массив источник физических устройств
+ * @param {*} target        Массив, в который добавятся только существующие устройства
+ * @param {*} targetError   Массив с meta #error для существующих устройств
+ */
+function reloadDeviceArray( source , target , targetError ) {
+    source.forEach( function (item, index, arr) {
+        if ( deviceExists(item) ) {
+            targetError.push( item + "#error" );
+            target.push( item );
+        }
+    });
+}
+
+/**
  * @brief   Функция проверяет на существование устройства и его контрола.
  * 
  * @param {String} topic Топик для проверки типа "device/topic"
  */
 function deviceExists( topic ) {
+
     var device  = topic.split('/')[0];
     var control = topic.split('/')[1];
     var exists = false;
@@ -433,6 +432,6 @@ function deviceExists( topic ) {
     return exists;
 }
 
-exports.createLightingGroup  = function( title , name , targetButton , targetLight , master , targetMotion ) {
-    createLightingGroup ( title , name , targetButton , targetLight , master , targetMotion );
+exports.createLightingGroup  = function( title , name , Button , Light , master , Motion ) {
+    createLightingGroup ( title , name , Button , Light , master , Motion );
 } 
