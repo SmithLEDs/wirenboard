@@ -21,6 +21,9 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         var ps = new PersistentStorage( name + "_storage", { global: true }); // Постоянное хранилище для запоминания состояний реле
     }
 
+    var lightError  = [];   // Массив для хранения устройств света с meta #error 
+    var motionError = [];   // Массив для хранения устройств движения с meta #error 
+
 
     // Создаем виртуальное устройство для управления группой реле
     defineVirtualDevice( name, {
@@ -55,6 +58,8 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
     targetLight.forEach( function (item, index, arr) {
         if ( !deviceExists(item) ) {
             targetLight.splice(index, 1);
+        } else {
+            lightError.push( item + "#error" );
         }
     });
 
@@ -64,6 +69,8 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         targetMotion.forEach( function (item, index, arr) {
             if ( !deviceExists(item) ) {
                 targetMotion.splice(index, 1);
+            } else {
+                motionError.push( item + "#error" );
             }
         });
     }
@@ -106,6 +113,9 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     forceDefault: true
                 });
                 flagON = dev[item];
+                if ( dev[lightError[index]] !== undefined ) {
+                    dev[name]["light_" + index + '#error'] = dev[lightError[index]];
+                }
             });
             dev[name]['qty'] = targetLight.length;
             dev[name]['stateGroup'] = flagON;
@@ -149,6 +159,9 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                         readonly: true,
                         forceDefault: true
                     });
+                    if ( dev[motionError[index]] !== undefined ) {
+                        dev[name]["motion_" + index + "#error"] = dev[motionError[index]];
+                    }
                 });
             }
         }
@@ -166,7 +179,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
     defineRule(name + '_clickButtonVirtual', {
         whenChanged: name + '/button',
         then: function () {   
-            targetLight.forEach( function (item) {
+            targetLight.forEach( function (item,index) {
                 if ( master ) {
                     // Если это мастер-выключатель, то перед отключением запоминаем состояние
                     if ( dev[name]['stateGroup'] ) {
@@ -180,7 +193,6 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     // Если просто выключатель, то инверируем реле согласно состоянию группы
                     dev[item] = !dev[name]['stateGroup'];
                 }
-
             });         
         }
     });
@@ -196,15 +208,17 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
 
     // Отслеживаем изменение переключений физических реле и записываем в контролы для визуализации
     defineRule(name + '_releChange', {
-        whenChanged: targetLight,
+        whenChanged:  targetLight,
         then: function () {
             var flagON = false;
             targetLight.forEach( function (item, index, arr) {
                 // Тут визуально изменяем контрол для наглядности
-                
                 getDevice(name).getControl( 'light_' + index ).setValue( dev[item] );
                 // Если хоть одна группа включена, то взводим флаг
                 if ( dev[item] ) flagON = true;
+                if ( dev[lightError[index]] !== undefined ) {
+                    getDevice(name).getControl( 'light_' + index ).setError( dev[lightError[index]] );
+                }
             });
             dev[name]['stateGroup'] = flagON;
 
@@ -214,6 +228,19 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     idTimer = startTimer();
                 }
             }
+        }
+    });
+
+    // Отслеживаем изменение meta #error устройств света
+    defineRule(name + '_lightError', {
+        whenChanged:  lightError,
+        then: function () {
+            lightError.forEach( function (item, index, arr) {
+                // Тут визуально изменяем контрол для наглядности
+                var err = dev[item];
+                if ( err == undefined ) err = '';
+                getDevice(name).getControl( 'light_' + index ).setError( err );
+            });
         }
     });
 
@@ -245,6 +272,19 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
             }, 10 * 1000); // 
         }
 
+        // Отслеживаем изменение meta #error устройств движения
+        defineRule(name + '_motionError', {
+            whenChanged:  motionError,
+            then: function () {
+                motionError.forEach( function (item, index, arr) {
+                    // Тут визуально изменяем контрол для наглядности
+                    var err = dev[item];
+                    if ( err == undefined ) err = '';
+                    getDevice(name).getControl( 'motion_' + index ).setError( err );
+                });
+            }
+        });
+
 
         // Правило отслеживает изменение датчиков движения
         defineRule(name + '_motionChange', {
@@ -253,11 +293,16 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                 var move = false;
                 
                 targetMotion.forEach(function (item, index, arr) {
-                    // Изменяем виртуальный контрол для наглядности
-                    getDevice(name).getControl( 'motion_' + index ).setValue( dev[item] );
 
-                    // Если хоть один датчик выдал значение больше уставки, то значит появилось движение
-                    if ( dev[item] > dev[name]['sensitivity'] ) move = true;
+                    if ( dev[motionError[index]] !== undefined ) {
+                        getDevice(name).getControl( 'motion_' + index ).setError( dev[motionError[index]] );
+                    } else {
+                        // Изменяем виртуальный контрол для наглядности
+                        getDevice(name).getControl( 'motion_' + index ).setValue( dev[item] );
+
+                        // Если хоть один датчик выдал значение больше уставки, то значит появилось движение
+                        if ( dev[item] > dev[name]['sensitivity'] ) move = true;
+                    }
                 });
 
                 if ( move ) {
