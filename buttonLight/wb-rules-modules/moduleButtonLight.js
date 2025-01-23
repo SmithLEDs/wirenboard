@@ -50,10 +50,27 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
     });
 
 
-    
+    // Первым делом перебираем массив источников света и удаляем из массива
+    // несуществующие устройства
+    targetLight.forEach( function (item, index, arr) {
+        if ( !deviceExists(item) ) {
+            targetLight.splice(index, 1);
+        }
+    });
+
+    // Первым делом перебираем массив источников движения и удаляем из массива
+    // несуществующие устройства
+    if (targetMotion) {
+        targetMotion.forEach( function (item, index, arr) {
+            if ( !deviceExists(item) ) {
+                targetMotion.splice(index, 1);
+            }
+        });
+    }
 
     // Перебираем массив источников света и создаем новые правила для управления реле
     targetLight.forEach( function (item, index, arr) {
+
         defineRule(name + ' ruleLight #' + index, {
             whenChanged: name + '/light_' + index,
             then: function (newValue, devName, cellName) {
@@ -61,6 +78,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                 dev[s] = newValue;
             }
         });
+        
     });
 
 
@@ -80,7 +98,6 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
             var flagON = false;
 
             targetLight.forEach( function (item, index, arr) {
-                
                 getDevice(name).addControl( "light_" + index , { 
                     title: item, 
                     type: "switch", 
@@ -88,7 +105,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     readonly: false,
                     forceDefault: true
                 });
-               
+                flagON = dev[item];
             });
             dev[name]['qty'] = targetLight.length;
             dev[name]['stateGroup'] = flagON;
@@ -184,6 +201,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
             var flagON = false;
             targetLight.forEach( function (item, index, arr) {
                 // Тут визуально изменяем контрол для наглядности
+                
                 getDevice(name).getControl( 'light_' + index ).setValue( dev[item] );
                 // Если хоть одна группа включена, то взводим флаг
                 if ( dev[item] ) flagON = true;
