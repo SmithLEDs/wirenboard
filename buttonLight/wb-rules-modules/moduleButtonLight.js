@@ -33,10 +33,16 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
     // несуществующие устройства
     reloadDeviceArray( Button , targetButton , buttonError);
     reloadDeviceArray( Light  , targetLight  , lightError);
+    
+    // Отслеживаем изменение meta #error устройств кнопок и света
+    createErrorRule( lightError , name , 'light_' );
+    createErrorRule( buttonError , name , 'Button_' );
+
     if ( Motion ) {
         var targetMotion = [];  // Массив для хранения устройств движения
         var motionError = [];   // Массив для хранения устройств движения с meta #error 
         reloadDeviceArray( Motion , targetMotion , motionError);
+        createErrorRule( motionError , name , 'motion_' ); // Отслеживаем изменение meta #error устройств движения
     }
 
 
@@ -234,9 +240,7 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
     });
 
 
-    // Отслеживаем изменение meta #error устройств кнопок и света
-    createErrorRule( lightError , name , 'light_' );
-    createErrorRule( buttonError , name , 'Button_' );
+
 
 
     // Отслеживаем изменение датчиков движения, если они есть
@@ -267,8 +271,7 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
             }, 10 * 1000); // 
         }
 
-        // Отслеживаем изменение meta #error устройств движения
-        createErrorRule( motionError , name , 'motion_' );
+
 
 
         // Правило отслеживает изменение датчиков движения
