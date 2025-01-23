@@ -65,9 +65,39 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
         },
         then: function () {
             log.warning('[' + title + ']: Перезагрузка модуля'); 
-            
-            var flagON = false;
 
+            if ( targetButton.length > 0 ) {
+                targetButton.forEach( function (item, index, arr) {
+                    var itemType = "";
+                    switch( typeof dev[item] ) {
+                        case 'boolean':
+                            itemType = "switch";
+                        break;
+                        case 'number':
+                            itemType = "value";
+                        break;
+                    }
+
+                    getDevice(name).addControl( "Button_" + index , { 
+                        title: item, 
+                        type: itemType, 
+                        value: dev[item], 
+                        readonly: true,
+                        forceDefault: true
+                    });   
+                    if ( dev[buttonError[index]] !== undefined ) {
+                        dev[name]["Button_" + index + '#error'] = dev[buttonError[index]];
+                    }             
+                });
+            } else {
+                getDevice(name).addControl( "ButtonAlarm", { 
+                    title: "Отсутствует физическое управление", 
+                    type: "alarm", 
+                    value: true
+                });   
+            }
+
+            var flagON = false;
             targetLight.forEach( function (item, index, arr) {
                 getDevice(name).addControl( "light_" + index , { 
                     title: item, 
@@ -85,28 +115,7 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
             dev[name]['qtyButton'] = targetButton.length;
             dev[name]['stateGroup'] = flagON;
 
-            targetButton.forEach( function (item, index, arr) {
-                var itemType = "";
-                switch( typeof dev[item] ) {
-                    case 'boolean':
-                        itemType = "switch";
-                    break;
-                    case 'number':
-                        itemType = "value";
-                    break;
-                }
 
-                getDevice(name).addControl( "Button_" + index , { 
-                    title: item, 
-                    type: itemType, 
-                    value: dev[item], 
-                    readonly: true,
-                    forceDefault: true
-                });   
-                if ( dev[buttonError[index]] !== undefined ) {
-                    dev[name]["Button_" + index + '#error'] = dev[buttonError[index]];
-                }             
-            });
 
             // Если указали датчики движения, то создаем нужные контролы
             if ( targetMotion ) {
