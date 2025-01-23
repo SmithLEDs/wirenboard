@@ -23,35 +23,19 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
 
     var lightError  = [];   // Массив для хранения устройств света с meta #error 
     var motionError = [];   // Массив для хранения устройств движения с meta #error 
+    var buttonError = [];   // Массив для хранения устройств физических кнопок с meta #error 
 
+    createVirtualDevice( title , name );
 
-    // Создаем виртуальное устройство для управления группой реле
-    defineVirtualDevice( name, {
-        title: title,
-        cells: {
-            // Здесь только отображаем общее состояние группы.
-            // Если хоть одно реле включено, то true ( смотри правило "_releChange" )
-            stateGroup: {
-                title: 'Состояние группы',
-                type: "switch",
-                value: false,
-                readonly: true
-            },
-            // Виртуальная кнопка для управления группой реле
-            button: {
-                title: 'Вкл/Выкл группу',
-                type: "pushbutton",
-            },
-            // Тут просто выводим общее кол-во реле в группе
-            qty: {
-                title: 'Кол-во групп света',
-                type: "value",
-                value: 0,
-                readonly: true
-            }
+    // Первым делом перебираем массив физических кнопок и удаляем из массива
+    // несуществующие устройства
+    targetButton.forEach( function (item, index, arr) {
+        if ( !deviceExists(item) ) {
+            targetButton.splice(index, 1);
+        } else {
+            buttonError.push( item + "#error" );
         }
     });
-
 
     // Первым делом перебираем массив источников света и удаляем из массива
     // несуществующие устройства
@@ -63,7 +47,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         }
     });
 
-    // Первым делом перебираем массив источников движения и удаляем из массива
+    // Далее перебираем массив источников движения и удаляем из массива
     // несуществующие устройства
     if (targetMotion) {
         targetMotion.forEach( function (item, index, arr) {
@@ -76,8 +60,8 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
     }
 
     // Перебираем массив источников света и создаем новые правила для управления реле
+    // прямо из виртуального устройства
     targetLight.forEach( function (item, index, arr) {
-
         defineRule(name + ' ruleLight #' + index, {
             whenChanged: name + '/light_' + index,
             then: function (newValue, devName, cellName) {
@@ -85,7 +69,6 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                 dev[s] = newValue;
             }
         });
-        
     });
 
 
@@ -117,8 +100,32 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
                     dev[name]["light_" + index + '#error'] = dev[lightError[index]];
                 }
             });
-            dev[name]['qty'] = targetLight.length;
+            dev[name]['qtyLight'] = targetLight.length;
+            dev[name]['qtyButton'] = targetButton.length;
             dev[name]['stateGroup'] = flagON;
+
+            targetButton.forEach( function (item, index, arr) {
+                var itemType = "";
+                switch( typeof dev[item] ) {
+                    case 'boolean':
+                        itemType = "switch";
+                    break;
+                    case 'number':
+                        itemType = "value";
+                    break;
+                }
+
+                getDevice(name).addControl( "Button_" + index , { 
+                    title: item, 
+                    type: itemType, 
+                    value: dev[item], 
+                    readonly: true,
+                    forceDefault: true
+                });   
+                if ( dev[targetButton[index]] !== undefined ) {
+                    dev[name]["Button_" + index + '#error'] = dev[targetButton[index]];
+                }             
+            });
 
             // Если указали датчики движения, то создаем нужные контролы
             if ( targetMotion ) {
@@ -175,7 +182,6 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
      *          -   Если это мастер-выключатель, то перед отключением запоминает 
      *              состояние реле в энергонезависимую память.
      */
-    // Отслеживаем переключение виртуального контрола "button"
     defineRule(name + '_clickButtonVirtual', {
         whenChanged: name + '/button',
         then: function () {   
@@ -202,6 +208,12 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         whenChanged: targetButton,
         then: function () {
             dev[name]['button'] = true;
+            targetButton.forEach( function (item, index, arr) {
+                getDevice(name).getControl( 'Button_' + index ).setValue( dev[item] );
+                if ( dev[buttonError[index]] !== undefined ) {
+                    getDevice(name).getControl( 'Button_' + index ).setError( dev[buttonError[index]] );
+                }                
+            });
         }
     });
 
@@ -231,18 +243,11 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         }
     });
 
-    // Отслеживаем изменение meta #error устройств света
-    defineRule(name + '_lightError', {
-        whenChanged:  lightError,
-        then: function () {
-            lightError.forEach( function (item, index, arr) {
-                // Тут визуально изменяем контрол для наглядности
-                var err = dev[item];
-                if ( err == undefined ) err = '';
-                getDevice(name).getControl( 'light_' + index ).setError( err );
-            });
-        }
-    });
+
+    // Отслеживаем изменение meta #error устройств кнопок и света
+    createErrorRule( lightError , name , 'light_' );
+    createErrorRule( buttonError , name , 'Button_' );
+
 
     // Отслеживаем изменение датчиков движения, если они есть
     if ( targetMotion ) {
@@ -273,17 +278,7 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
         }
 
         // Отслеживаем изменение meta #error устройств движения
-        defineRule(name + '_motionError', {
-            whenChanged:  motionError,
-            then: function () {
-                motionError.forEach( function (item, index, arr) {
-                    // Тут визуально изменяем контрол для наглядности
-                    var err = dev[item];
-                    if ( err == undefined ) err = '';
-                    getDevice(name).getControl( 'motion_' + index ).setError( err );
-                });
-            }
-        });
+        createErrorRule( motionError , name , 'motion_' );
 
 
         // Правило отслеживает изменение датчиков движения
@@ -347,6 +342,72 @@ function createLightingGroup ( title , name , targetButton , targetLight , maste
 
 
 }
+
+
+
+/**
+ * @brief   Функция создания виртуального устройства.
+ *          В дальнейшем к этому устройству добавляются дополнительные контролы
+ * @param {String}  title   Описание виртуального устройства (Можно на русском)
+ * @param {String}  name    Имя виртуального устройства (Будет отображаться в новом виртуальном кстройстве как name/... )
+ */
+function createVirtualDevice( title , name ) {
+    defineVirtualDevice( name, {
+        title: title,
+        cells: {
+            // Здесь только отображаем общее состояние группы.
+            // Если хоть одно реле включено, то true ( смотри правило "_releChange" )
+            stateGroup: {
+                title: 'Состояние группы',
+                type: "switch",
+                value: false,
+                readonly: true
+            },
+            // Виртуальная кнопка для управления группой реле
+            button: {
+                title: 'Вкл/Выкл группу',
+                type: "pushbutton",
+            },
+            // Тут просто выводим общее кол-во реле в группе
+            qtyLight: {
+                title: 'Кол-во групп света',
+                type: "value",
+                value: 0,
+                readonly: true
+            },
+            // Тут просто выводим общее кол-во физических кнопок
+            qtyButton: {
+                title: 'Кол-во выключателей',
+                type: "value",
+                value: 0,
+                readonly: true
+            }
+        }
+    });
+}
+
+
+/**
+ * @brief   Функция создает правило для слежения за meta #error
+ * 
+ * @param {*} targetError Массив на список устройств с meta #error
+ * @param {*} device  Имя устройства
+ * @param {*} control Контрол устройства
+ */
+function createErrorRule( targetError , device , control ) {
+    defineRule(device + '_' + control + 'Error', {
+        whenChanged:  targetError,
+        then: function () {
+            targetError.forEach( function (item, index, arr) {
+                // Тут визуально изменяем контрол для наглядности
+                var err = dev[item];
+                if ( err == undefined ) err = '';
+                getDevice(device).getControl( control + index ).setError( err );
+            });
+        }
+    });
+}
+
 
 /**
  * @brief   Функция проверяет на существование устройства и его контрола.
