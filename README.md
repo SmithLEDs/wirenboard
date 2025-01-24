@@ -1,6 +1,10 @@
-# Модули для правил wb-rules
-
-<img style="float: right;" height="200" src="logo.png">
+<h1 align="center">
+  <br>
+  <img style="float: right;" height="200" src="logo.png">
+  <br>
+  <b>Модули для правил wb-rules</b>
+  <br>
+</h1>
 
 Мои модули для движка правил **wb-rules** компании Wiren Board.
 
