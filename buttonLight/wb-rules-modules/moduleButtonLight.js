@@ -411,12 +411,19 @@ function createErrorRule( targetError , device , control ) {
  * @param {*} targetError   Массив с meta #error для существующих устройств
  */
 function reloadDeviceArray( source , target , targetError ) {
-    source.forEach( function (item, index, arr) {
-        if ( deviceExists(item) ) {
-            targetError.push( item + "#error" );
-            target.push( item );
-        }
-    });
+    if ( source.constructor === Array ) {
+        source.forEach( function (item, index, arr) {
+            if ( deviceExists(item) ) {
+                targetError.push( item + "#error" );
+                target.push( item );
+            }
+        });
+    } else {
+        if ( deviceExists(source) ) {
+            targetError.push( source + "#error" );
+            target.push( source );
+        }        
+    }
 }
 
 /**

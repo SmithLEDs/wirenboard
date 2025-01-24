@@ -8,7 +8,7 @@ var but1 = [
 var light1 = [ 
     'wb-mr6c_1/K3',                     
     'wb-mr6c_1/K4',
-    'wb-mr6c_1/K5'
+    'wb-mr6c_1/K5'  
 ]; 
 var motion1 = [
     'wb-msw-v4_80/Current Motion'
