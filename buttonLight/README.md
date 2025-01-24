@@ -24,13 +24,13 @@
 ```js
 var button = require('moduleButtonLight'); // Подключим наш модуль
 
-// Создаем переменную
-var but1 = [
-    'testButton/Input 1'
-];
-var light1 = [ 
-    'wb-mr6c_1/K3',                     
-    'wb-mr6c_1/K4',
-    'wb-mr6c_1/K5'
-]; 
+
+var but = 'testButton/Input 1';     // Создаем переменную с указанием топика физической кнопки
+                                    // или 'testButton/Input 1 counter' для выключателя без фиксации
+var light = 'wb-mr6c_1/K5';         // Создаем переменную с указанием реле, на которое подключена лампочка
+
+// Создаем виртуальное устройства при помощи подключенного модуля
+button.createLightingGroup('Свет на кухне' , 'Light_kitchen' , but , light );    
 ```
+![SCREENSHOT](/img/1-1.png)
+
