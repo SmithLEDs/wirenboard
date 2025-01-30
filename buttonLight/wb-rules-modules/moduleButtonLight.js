@@ -277,8 +277,10 @@ function createLightingGroup ( title , name , Button , Light , master , Motion )
         // Правило отслеживает изменение датчиков движения
         defineRule(name + '_motionChange', {
             whenChanged: targetMotion,
-            then: function () {
+            then: function (newValue, devName, cellName) {
                 var move = false;
+
+                
                 
                 targetMotion.forEach(function (item, index, arr) {
 
