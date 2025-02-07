@@ -16,7 +16,8 @@
 - [Описание работы драйвера **wb-mqtt-serial**](https://github.com/wirenboard/wb-mqtt-serial?tab=readme-ov-file#шаблоны-конфигурации)
 
 ### Модули для движка правил wb-rules
-- [moduleButtonLight](https://github.com/SmithLEDs/wb-buttonLight) - Модуль для управления светом по кнопкам и датчикам движения
+- [moduleButtonLight](https://github.com/SmithLEDs/wb-buttonLight.git) - Модуль для управления светом по кнопкам и датчикам движения
+- [moduleConverterMAP](https://github.com/SmithLEDs/wb-converterMAP.git) - Конвертер получаемых данных от счётчика электроэнергии WB-MAP
 
 ### Шаблоны для сторонних устройств
 - [config-Lovato-RGK800](https://github.com/SmithLEDs/wb-template_LovatoRGK800.git) - Шаблон для контроллера ДГУ Lovato RGK800
