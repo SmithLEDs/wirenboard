@@ -39,6 +39,7 @@
 
 * `/mnt/data/etc/wb-rules-modules` - Расположение файлов модулей
 * `/mnt/data/etc/wb-rules` - Расположение файлов правил (скриптов)
+* `/usr/share/wb-mqtt-serial/templates` - Расположение файла шаблонов поддерживаемых устройств
 * `/etc/wb-mqtt-serial.conf.d/templates` - Расположение файлов шаблонов сторонних устройств
 
 
