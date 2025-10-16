@@ -20,6 +20,9 @@
 - [moduleConverterMAP](https://github.com/SmithLEDs/wb-converterMAP.git) - Конвертер получаемых данных от счётчика электроэнергии WB-MAP
 - [moduleSensorCO2](https://github.com/SmithLEDs/wb-sensor-CO2.git) - Модуль для датчиков CO2
 
+### Микро-сервисы для Linux
+- [smith-zabbix-mqtt](https://github.com/SmithLEDs/smith-zabbix-mqtt.git) - Программа для конвертации активных триггеров Zabbix в MQTT
+
 ### Шаблоны для сторонних устройств
 - [config-Lovato-RGK800](https://github.com/SmithLEDs/wb-template_LovatoRGK800.git) - Шаблон для контроллера ДГУ Lovato RGK800
 
