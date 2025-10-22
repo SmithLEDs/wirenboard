@@ -25,6 +25,7 @@
 
 ### Шаблоны для сторонних устройств
 - [config-Lovato-RGK800](https://github.com/SmithLEDs/wb-template_LovatoRGK800.git) - Шаблон для контроллера ДГУ Lovato RGK800
+- [config-Korund_di_001MRS](https://github.com/SmithLEDs/wb-template_KORUND-DI-001MRS.git) - Шаблон для датчика давления КОРУНД-ДИ-001MRS
 
 ### Установка модулей в контроллер
 
