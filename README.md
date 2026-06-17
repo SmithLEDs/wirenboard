@@ -21,6 +21,7 @@
 - [moduleButtonLight](https://github.com/SmithLEDs/wb-buttonLight.git) - Модуль для управления светом по кнопкам и датчикам движения
 - [moduleConverterMAP](https://github.com/SmithLEDs/wb-converterMAP.git) - Конвертер получаемых данных от счётчика электроэнергии WB-MAP
 - [moduleSensorCO2](https://github.com/SmithLEDs/wb-sensor-CO2.git) - Модуль для датчиков CO2
+- [moduleMetaError](https://github.com/SmithLEDs/wb-metaError.git) - Модуль для слежения за `metaError` устройств
 
 ### Микро-сервисы для Linux
 - [smith-zabbix-mqtt](https://github.com/SmithLEDs/smith-zabbix-mqtt.git) - Программа для конвертации активных триггеров Zabbix в MQTT
